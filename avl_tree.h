@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <algorithm>
+#include <queue>
+
 using namespace std;
 
 //NODE CLASS
@@ -14,6 +16,7 @@ public:
 	node* r;
 	node* p;
 	int key;
+	int height;
 	node(int, node*);
 	void printNode();
 	node* createNode(int, node*);
@@ -59,10 +62,14 @@ class avl_tree {
 	//Recursive Functions
 	node* insertRec(int, node*);
 
+	//Iterative Functions
+	//void  insertIter(int);
+	
 public:
 	node* root;
 	avl_tree();
 	void insertRec(int);
+	void insertIter(int);
 	int height();
 
 };
@@ -86,22 +93,35 @@ void avl_tree::rr_rotate(node* root) {
 };
 
 void avl_tree::ll_rotate(node* root) {
-	cout << "A key " << root->key <<endl;
-	cout << "B key " << (root->l)->key <<endl;
+
+	cout << "A key " << root->key << endl;
+	cout << "B key " << (root->l)->key << endl;
+	cout << "C key " << (root->l)->l->key << endl;
 	node* A = root;
-	cout << "set A" <<endl;
+	cout << "set A" << endl;
 	node* B = root->l;
-	cout << "set B" <<endl;
+	cout << "set B" << endl;
 	node* C = B->l;
-	cout << "set C" <<endl;
+	cout << "set C" << endl;
+
+	if(root->p == NULL)
+		B->p = NULL;
+	else
+		B->p = A->p;
+
 
 	A->l = B->r;
 	B->r = A;
 	B->l = C;
-
-	root = B;
+	
+	A->p = B;
+	C->p = B;
+	
+	cout << "B key " << B->key << endl;
+	cout << "B LEFT key " << B->l->key << endl;
+	cout << "C RIGHT key " << B->r->key << endl;
+		
 };
-
 
 void avl_tree::lr_rotate(node* root) {
 	rr_rotate(root->l);
@@ -113,21 +133,49 @@ void avl_tree::rl_rotate(node* root) {
 	ll_rotate(root);
 };
 
-
 int avl_tree::height() {
 	if (root)
 		return height(root);
 	else
 		return 0;
 };
-
-int avl_tree::height(node* root) {
+/*
+int avl_tree::heightRec(node* root) {
 	if (root == NULL) {
 		return 0;
 	}
 	else
 		return max(height(root->l), height(root->r)) + 1;
 };
+*/
+
+int avl_tree::height(node* root) {
+	int h = 0;
+	if (!root)
+		return 0;
+	queue<node*> nodeQ;
+	
+	nodeQ.push(root);
+	
+	while (1) {
+		int nodes = nodeQ.size();
+		if (nodes == 0)
+			return h;
+
+		h++;
+
+		while (nodes > 0) {
+			node* front = nodeQ.front();
+			nodeQ.pop();
+
+			if (front->l != NULL)
+				nodeQ.push(front->l);
+			if (front->r != NULL)
+				nodeQ.push(front->r);
+			nodes--;
+		}
+	}
+}
 
 int avl_tree::balanceFactor(node* root) {
 	return (height(root->l) - height(root->r));
@@ -145,7 +193,7 @@ void avl_tree::balance(node* root) {
 			rr_rotate(root);
 		}
 		else {
-			cout << "L" << endl;
+			cout << "R" << endl;
 			rl_rotate(root);
 		}
 
@@ -167,7 +215,7 @@ void avl_tree::balance(node* root) {
 
 //RECURSION
 void avl_tree::insertRec(int key) {
-	this->root = insertRec(key, root);
+	root = insertRec(key, root);
 };
 
 node* avl_tree::insertRec(int key, node* root) {
@@ -190,16 +238,52 @@ node* avl_tree::insertRec(int key, node* root) {
 		else
 			root->r = createNode(key, root);
 	}
-	cout << "ROOT KEY: " << root->key <<endl;
 	balance(root);
 
 	return root;
 
 };
+/*
+void avl_tree::insertIter(int key) {
+	insertIter(key, root);
+}
+*/
+void avl_tree::insertIter(int key) {
+	node* curr = this->root;
+	node* last = curr;
+	if(!curr){
+		this->root = createNode(key,NULL);
+		return;
+	}
+	while (curr) {
+		last = curr;
+		if (key < curr->key){
+			if(curr->l)
+				curr = curr->l;
+			else{
+				curr->l = createNode(key,last);
+				break;
+			}
+		}
+		else{
+			if(curr->r)
+				curr = curr->r;
+			else{
+				curr->r = createNode(key,last);
+				break;
+			}
+		}
+	}
 
+	while (curr) {
+		cout << "Before Balance " <<  curr->key<<endl;
+		balance(curr);
+		cout << "After Balance " << curr->key<<endl;
+		//cout << "LEFT: ";
+		curr = curr->p;
+	}
 
-
-
+}
 
 #endif
 
